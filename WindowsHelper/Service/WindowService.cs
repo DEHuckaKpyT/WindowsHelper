@@ -13,6 +13,7 @@ namespace WindowsHelper.Service
         private const short SWP_NOSIZE = 1;
         private const short SWP_NOZORDER = 0x4;
         private const int SWP_SHOWWINDOW = 0x0040;
+        private const int SW_HIDE = 0;
 
         public IDictionary<IntPtr, string> GetOpenWindows()
         {
@@ -20,18 +21,18 @@ namespace WindowsHelper.Service
             IntPtr shellWindow = GetShellWindow();
             Dictionary<IntPtr, string> windows = new Dictionary<IntPtr, string>();
 
-            EnumWindows(delegate (IntPtr IntPtr, int lParam)
+            EnumWindows(delegate (IntPtr intPtr, int lParam)
             {
                 //if (IntPtr == shellWindow) return true;
-                if (!IsWindowVisible(IntPtr)) return true;
+                if (!IsWindowVisible(intPtr)) return true;
 
-                int length = GetWindowTextLength(IntPtr);
+                int length = GetWindowTextLength(intPtr);
                 if (length == 0) return true;
 
                 StringBuilder builder = new StringBuilder(length);
-                GetWindowText(IntPtr, builder, length + 1);
+                GetWindowText(intPtr, builder, length + 1);
 
-                windows[IntPtr] = builder.ToString();
+                windows[intPtr] = builder.ToString();
                 return true;
 
             }, 0);
@@ -52,6 +53,32 @@ namespace WindowsHelper.Service
 
                 Console.WriteLine("{0}: {1}", handle, title);
             }
+        }
+
+        //todo убрать бы костыль :(
+        public Process GetForeground()
+        {
+            int currentProcessId = Process.GetCurrentProcess().Id;
+            int foregroundProcessId = currentProcessId;
+
+            IntPtr intPtr = IntPtr.Zero;
+            StringBuilder builder = new StringBuilder(0);
+
+            while (currentProcessId == foregroundProcessId)
+            {
+                Thread.Sleep(10);
+                intPtr = GetForegroundWindow();
+                GetWindowThreadProcessId(intPtr, ref foregroundProcessId);
+            }
+
+            int length = GetWindowTextLength(intPtr);
+
+            builder = new StringBuilder(length);
+            GetWindowText(intPtr, builder, length + 1);
+
+            Process process = Process.GetProcessById(foregroundProcessId);
+
+            return process;
         }
     }
 }
