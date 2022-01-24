@@ -12,6 +12,7 @@ namespace WindowsHelper.CustomNotifyIcon.CustomContextMenuStrip
         public WindowManagerContextMenuStrip()
         {
             Items.Add(new SelectWindowToolStripMenuItem());
+            Items.Add(new TransparentWindowToolStripMenuItem());
             Items.Add(new ExitToolStripMenuItem());
         }
     }
