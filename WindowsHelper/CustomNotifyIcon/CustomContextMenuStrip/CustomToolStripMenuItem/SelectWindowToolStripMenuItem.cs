@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using WindowsHelper.CustomForm;
 using WindowsHelper.Hooker.MouseAndKeyboard;
 using WindowsHelper.Service;
 
@@ -19,10 +20,11 @@ namespace WindowsHelper.CustomNotifyIcon.CustomContextMenuStrip.CustomToolStripM
             MouseAndKeyboardHooker.MouseClickExt += MouseAndKeyboardHooker_MouseClickExt;
         }
 
-        private void MouseAndKeyboardHooker_MouseClickExt(object? sender, MouseEventExtArgs e)
+        private async void MouseAndKeyboardHooker_MouseClickExt(object? sender, MouseEventExtArgs e)
         {
             MouseAndKeyboardHooker.MouseClickExt -= MouseAndKeyboardHooker_MouseClickExt;
-            Process process = windowService.GetForeground();
+
+            new WindowManagerForm(await Task.Run(() => windowService.GetForegroundHandle())).Show();
         }
     }
 }

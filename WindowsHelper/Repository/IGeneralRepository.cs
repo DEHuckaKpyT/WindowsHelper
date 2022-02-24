@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace WindowsHelper.Repository
 {
-    internal interface IProcessRepository
+    internal interface IGeneralRepository
     {
+        Task<T> SaveAsync<T>(T item);
     }
 }

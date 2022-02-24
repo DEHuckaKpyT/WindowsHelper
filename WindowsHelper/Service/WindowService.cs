@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using WindowsHelper.Model;
+using WindowsHelper.Repository;
 
 namespace WindowsHelper.Service
 {
     internal partial class WindowService : IWindowService
     {
-        private const short SWP_NOMOVE = 0x2;
-        private const short SWP_NOSIZE = 1;
-        private const short SWP_NOZORDER = 0x4;
-        private const int SWP_SHOWWINDOW = 0x0040;
-        private const int SW_HIDE = 0;
+        IGeneralRepository repository = new GeneralRepository();
+
 
         public IDictionary<IntPtr, string> GetOpenWindows()
         {
@@ -40,23 +40,8 @@ namespace WindowsHelper.Service
             return windows;
         }
 
-        public void Move()
-        {
-            IDictionary<IntPtr, string> dictionary = GetOpenWindows();
-            foreach (KeyValuePair<IntPtr, string> window in dictionary)
-            {
-                IntPtr handle = window.Key;
-                string title = window.Value;
-                //IntPtr handle = process.MainWindowHandle;
-
-                SetWindowPos(handle, 0, 0, 0, 500, 500, SWP_NOZORDER | SWP_SHOWWINDOW);
-
-                Console.WriteLine("{0}: {1}", handle, title);
-            }
-        }
-
         //todo убрать бы костыль :(
-        public Process GetForeground()
+        public IntPtr GetForegroundHandle()
         {
             int currentProcessId = Process.GetCurrentProcess().Id;
             int foregroundProcessId = currentProcessId;
@@ -78,7 +63,55 @@ namespace WindowsHelper.Service
 
             Process process = Process.GetProcessById(foregroundProcessId);
 
-            return process;
+            //MessageBox.Show($"{builder}\n" +
+            //    $"{process.ProcessName}");
+
+            return intPtr;
+        }
+
+        //todo exceptions
+        public void SetPositionByHandle(IntPtr handle, int x, int y, int cx, int cy)
+        {
+            SetWindowPos(handle, 0, x, y, cx, cy, SWP_NOZORDER);
+        }
+
+        //todo exceptions
+        public void SetPositionByHandleWithoutShadow(IntPtr hWnd, int x, int y, int cx, int cy)
+        {
+            Rect window = new Rect(x, y, x + cx, y + cy);
+            Rect excludeShadow = new Rect();
+            Rect includeShadow = new Rect();
+
+            excludeShadow = GetWindowRectangleWithShadow(hWnd);
+            GetWindowRect(hWnd, out includeShadow);
+
+            Rect shadow = new Rect();
+
+            shadow.Left = includeShadow.Left - excludeShadow.Left;
+            shadow.Right = includeShadow.Right - excludeShadow.Right;
+            shadow.Top = includeShadow.Top - excludeShadow.Top;
+            shadow.Bottom = includeShadow.Bottom - excludeShadow.Bottom;
+
+            int width = (window.Right + shadow.Right) - (window.Left + shadow.Left);
+            int height = (window.Bottom + shadow.Bottom) - (window.Top - shadow.Top);
+
+            SetWindowPos(hWnd, 0, window.Left + shadow.Left, window.Top + shadow.Top, width, height, 0);
+        }
+
+        public WindowModel SaveWindowPosition(IntPtr hWnd)
+        {
+            int foregroundProcessId = 0;
+            GetWindowThreadProcessId(hWnd, ref foregroundProcessId);
+
+            WindowModel window = new WindowModel()
+            {
+                Rectangle = GetWindowRectangleWithShadow(hWnd),
+                ProcessName = Process.GetProcessById(foregroundProcessId).ProcessName
+            };
+
+            repository.SaveAsync(window);
+
+            return window;
         }
     }
 }

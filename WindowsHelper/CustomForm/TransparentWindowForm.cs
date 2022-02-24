@@ -52,13 +52,6 @@ namespace WindowsHelper.CustomForm
                     await Task.Run(() =>
                     {
                         g.CopyFromScreen(Location, Point.Empty, ClientSize);
-                        //g.FillRectangle(captionBrush, 0, 0, ClientSize.Width, captionHeight);
-                        //g.FillPolygon(Brushes.Red, new Point[]
-                        //{
-                        //    new Point(ClientSize.Width - gripSize, ClientSize.Height),
-                        //    new Point(ClientSize.Width, ClientSize.Height),
-                        //    new Point(ClientSize.Width, ClientSize.Height - gripSize)
-                        //});
                     });
                 }
                 await Task.Run(() => graphics.DrawImage(screenshot, 0, 0));
